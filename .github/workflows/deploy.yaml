@@ -26,4 +26,4 @@ jobs:
 
       - name: Apply Kubernetes manifests
         run: |
-          cd k8s/scripts && ./deploy.sh
+          cd scripts && ./deploy.sh
