@@ -13,25 +13,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate Kubernetes Secrets manifest
+      - name: Create or Update Kubernetes Secrets
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
-          SECRET_KEY_BASE64=$(echo -n "${{ secrets.SECRET_KEY }}" | base64)
-          MONGO_URI_BASE64=$(echo -n "${{ secrets.MONGO_URI }}" | base64)
-
-          cat <<EOF > ./k8s/backend/backend-secrets.yaml
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: backend-secrets
-            namespace: ecommerce
-          type: Opaque
-          data:
-            SECRET_KEY: ${SECRET_KEY_BASE64}
-            MONGO_URI: ${MONGO_URI_BASE64}
-          EOF
+          kubectl create secret generic backend-secrets \
+            --namespace=ecommerce \
+            --from-literal=SECRET_KEY="${SECRET_KEY}" \
+            --from-literal=MONGO_URI="${MONGO_URI}" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply Kubernetes manifests
         run: |
-          kubectl apply -f ./k8s/backend/backend-secrets.yaml
-
           kubectl apply -f ./k8s/
+
