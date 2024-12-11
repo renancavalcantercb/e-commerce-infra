@@ -15,7 +15,7 @@ jobs:
 
       - name: Generate Kubernetes Secrets manifest
         run: |
-          echo "
+          cat <<EOF > ./k8s/backend/backend-secrets.yaml
           apiVersion: v1
           kind: Secret
           metadata:
@@ -25,9 +25,10 @@ jobs:
           data:
             SECRET_KEY: $(echo -n '${{ secrets.SECRET_KEY }}' | base64)
             MONGO_URI: $(echo -n '${{ secrets.MONGO_URI }}' | base64)
-          " > ./k8s/backend/backend-secrets.yaml
+          EOF
 
       - name: Apply Kubernetes manifests
         run: |
           kubectl apply -f ./k8s/backend/backend-secrets.yaml
           kubectl apply -f ./k8s/
+
