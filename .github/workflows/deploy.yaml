@@ -15,6 +15,9 @@ jobs:
 
       - name: Generate Kubernetes Secrets manifest
         run: |
+          SECRET_KEY_BASE64=$(echo -n "${{ secrets.SECRET_KEY }}" | base64)
+          MONGO_URI_BASE64=$(echo -n "${{ secrets.MONGO_URI }}" | base64)
+
           cat <<EOF > ./k8s/backend/backend-secrets.yaml
           apiVersion: v1
           kind: Secret
@@ -23,12 +26,12 @@ jobs:
             namespace: ecommerce
           type: Opaque
           data:
-            SECRET_KEY: $(echo -n '${{ secrets.SECRET_KEY }}' | base64)
-            MONGO_URI: $(echo -n '${{ secrets.MONGO_URI }}' | base64)
+            SECRET_KEY: ${SECRET_KEY_BASE64}
+            MONGO_URI: ${MONGO_URI_BASE64}
           EOF
 
       - name: Apply Kubernetes manifests
         run: |
           kubectl apply -f ./k8s/backend/backend-secrets.yaml
-          kubectl apply -f ./k8s/
 
+          kubectl apply -f ./k8s/
