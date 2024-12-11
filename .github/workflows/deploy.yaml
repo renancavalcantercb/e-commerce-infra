@@ -7,24 +7,27 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Copy manifests to server
+      - name: Generate Kubernetes Secrets manifest
         run: |
-          scp -r ./k8s/ backend-secrets.yaml renanserv@192.168.1.18:/home/renanserv/ecommerce-infra/
+          echo "
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: backend-secrets
+            namespace: ecommerce
+          type: Opaque
+          data:
+            SECRET_KEY: $(echo -n '${{ secrets.SECRET_KEY }}' | base64)
+            MONGO_URI: $(echo -n '${{ secrets.MONGO_URI }}' | base64)
+          " > ./k8s/backend/backend-secrets.yaml
 
-      - name: Apply Kubernetes manifests on server
+      - name: Apply Kubernetes manifests
         run: |
-          ssh renanserv@192.168.1.18 << 'EOF'
-            kubectl apply -f /home/renanserv/ecommerce-infra/k8s/backend/backend-secrets.yaml
-            kubectl apply -f /home/renanserv/ecommerce-infra/k8s/
-          EOF
+          kubectl apply -f ./k8s/backend/backend-secrets.yaml
+          kubectl apply -f ./k8s/
